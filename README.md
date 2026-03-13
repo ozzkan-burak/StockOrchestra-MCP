@@ -1,44 +1,29 @@
-Proje Başlığı: StockOrchestra-MCP: Otonom Stok Yönetim Köprüsü
-Kısa Tanım: LLM (Large Language Model) dünyası ile kurumsal veri kaynakları arasındaki izolasyonu yıkan, .NET tabanlı bir MCP (Model Context Protocol) sunucusudur. Bu proje, yapay zekanın standart bir protokol üzerinden PostgreSQL veritabanına güvenli erişimini sağlayarak otonom stok takibi ve satın alma talebi oluşturma yetenekleri kazanmasını hedefler.
+# StockOrchestra-MCP: Otonom Stok Yönetim Köprüsü
 
-Senaryo: Şirket personeli Claude Desktop veya benzeri bir MCP destekli arayüz üzerinden "Kritik seviyenin altına düşen ürünleri listele ve eksik miktar kadar satın alma talebi oluştur" talimatını verir. Ajan, MCP sunucusu üzerinden PostgreSQL'e bağlanır, stokları analiz eder, eksik miktarları hesaplar ve satın alma tablosuna gerekli kayıtları atarak işlemi onay için kullanıcıya raporlar.
+## Proje Başlığı: StockOrchestra-MCP: Otonom Stok Yönetim Köprüsü
 
-Teknik Stack:
+## Kısa Tanım
+Yapay zeka modellerinin (LLM) dış dünyadan izole yapısını kırarak, standart bir protokol (MCP) üzerinden şirketin yerel PostgreSQL veritabanına güvenli ve kontrollü erişim sağlamasıdır. Bu sunucu, modelin veritabanı şemasını anlamasına, stokları analiz etmesine ve otonom kararlar almasına olanak tanıyan bir köprü görevi görür.
 
-Runtime: .NET 8.0 / 9.0
+---
 
-Protocol: Model Context Protocol (MCP)
+## Senaryo
+Kullanıcının Claude arayüzüne veya herhangi bir MCP istemcisine "Kritik seviyenin altına düşen ürünleri kontrol et ve tedarik süreci için satın alma taleplerini oluştur" talimatını vermesiyle süreç başlar. Ajan, arka planda senin yazdığın .NET MCP sunucusuna bağlanır; veritabanından anlık stok verisini çeker, eşik değerleri analiz eder ve eksik miktarlar için satın alma tablosuna (PurchaseRequests) otomatik kayıtlar atarak kullanıcıya süreci raporlar.
 
-Database: PostgreSQL (Docker)
+---
 
-Communication: JSON-RPC over stdio
+## Teknik Altyapı
+* **Çalışma Zamanı:** .NET 8.0 / 9.0
+* **Protokol:** Model Context Protocol (MCP)
+* **Veritabanı:** PostgreSQL (Docker üzerinden)
+* **İletişim:** JSON-RPC over stdio (Standart Girdi/Çıktı)
+* **ORM:** Entity Framework Core
 
-ORM: Entity Framework Core
+---
 
-Kurulum ve Başlatma
-1. Veritabanı (Docker)
-Projenin kök dizininde yer alan Docker Compose dosyası ile PostgreSQL'i ayağa kaldırın:
+## Kurulum ve Başlatma
 
-Bash
+### 1. Veritabanı Hazırlığı
+PostgreSQL'i Docker üzerinde hızlıca ayağa kaldırmak için ilgili dizinde şu komutu çalıştırın:
+```bash
 docker-compose up -d
-2. Sunucu Yapılandırması
-MCP sunucusu Claude Desktop gibi istemciler tarafından şu komutla tetiklenir:
-
-JSON
-{
-  "mcpServers": {
-    "stock-orchestra": {
-      "command": "dotnet",
-      "args": ["run", "--project", "path/to/StockOrchestra.Server.csproj"],
-      "env": {
-        "CONNECTION_STRING": "Host=localhost;Database=StockDb;Username=postgres;Password=password"
-      }
-    }
-  }
-}
-Proje Yetenekleri (Tools)
-list_products: Tüm ürün listesini ve mevcut stok durumlarını çeker.
-
-get_low_stock: Belirlenen kritik eşiğin altındaki ürünleri filtreler.
-
-create_purchase_request: Eksik ürünler için otomatik satın alma kaydı oluşturur.
