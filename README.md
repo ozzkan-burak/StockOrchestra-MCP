@@ -27,3 +27,21 @@ Kullanıcının Claude arayüzüne veya herhangi bir MCP istemcisine "Kritik sev
 PostgreSQL'i Docker üzerinde hızlıca ayağa kaldırmak için ilgili dizinde şu komutu çalıştırın:
 ```bash
 docker-compose up -d
+```
+
+2. İstemci Yapılandırması (Claude Desktop Örneği)
+Claude Desktop yapılandırma dosyanıza (claude_desktop_config.json) aşağıdaki sunucu tanımını ekleyin:
+```
+JSON
+{
+  "mcpServers": {
+    "stock-orchestra": {
+      "command": "dotnet",
+      "args": ["run", "--project", "C:/Projeler/StockOrchestra-MCP/src/StockOrchestra.Server/StockOrchestra.Server.csproj"],
+      "env": {
+        "CONNECTION_STRING": "Host=localhost;Database=StockDb;Username=postgres;Password=password"
+      }
+    }
+  }
+}
+```
