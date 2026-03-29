@@ -13,7 +13,6 @@ public class StockDbContext : DbContext
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
-    // Fluent API ile baslangic verileri (Seed Data) ekleyebiliriz
     modelBuilder.Entity<Product>().HasData(
         new Product { Id = 1, Name = "Laptop", CurrentStock = 15, CriticalThreshold = 5 },
         new Product { Id = 2, Name = "Mouse", CurrentStock = 3, CriticalThreshold = 10 }

@@ -1,22 +1,15 @@
-# docker/docker-compose.yml
 version: '3.8'
-
 services:
-  # PostgreSQL veritabani servisi
   stock-db:
     image: postgres:latest
     container_name: stockorchestra-db
     environment:
-      # Veritabani adi, kullanici ve sifre tanimlamalari
       - POSTGRES_DB=StockDb
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
     ports:
-      # Disaridan erisim portu: 5432
       - '5432:5432'
     volumes:
-      # Verilerin konteyner silinse bile kalici olmasi icin volume tanimi
       - postgres_data:/var/lib/postgresql/data
-
 volumes:
   postgres_data:
