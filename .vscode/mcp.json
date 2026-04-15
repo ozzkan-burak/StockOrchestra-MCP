@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "stock-orchestra": {
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "src/StockOrchestra.Server/StockOrchestra.Server.csproj"
+      ],
+      "env": {
+        "CONNECTION_STRING": "Host=localhost;Port=5434;Database=StockDb;Username=postgres;Password=password"
+      }
+    }
+  }
+}
