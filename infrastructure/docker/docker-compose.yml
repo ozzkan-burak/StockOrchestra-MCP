@@ -1,9 +1,8 @@
 # ==============================================================================
-# StockOrchestra - Altyapı Docker Compose Yapılandırması
+# StockOrchestra - Complete Infrastructure Docker Compose
 # ==============================================================================
 # Proje: StockOrchestra-MCP
-# Faz: 1 - Şantiye ve Altyapı (Infrastructure as Code)
-# Açıklama: TimescaleDB, Redis ve Message Broker servislerinin yapılandırması
+# Faz: 1-7 - Tüm Altyapı Servisleri
 # ==============================================================================
 
 services:
@@ -26,8 +25,7 @@ services:
     networks:
       - internal_bridge
     healthcheck:
-      test:
-        ['CMD-SHELL', 'pg_isready -U stockorchestra -d stockorchestra_ledger']
+      test: ['CMD-SHELL', 'pg_isready -U stockorchestra -d stockorchestra_ledger']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -36,7 +34,6 @@ services:
       service.type: timeseries-database
       project.name: StockOrchestra
       project.version: '1.0'
-      project.phase: '1'
 
   # ----------------------------------------------------------------------------
   # Redis Servisi (In-Memory Data Store, Message Broker)
@@ -73,29 +70,85 @@ services:
       service.type: in-memory-cache
       project.name: StockOrchestra
       project.version: '1.0'
-      project.phase: '1'
 
-# ----------------------------------------------------------------------------
-# Docker Volumes - Veri Kalıcılığı için Named Volumes
-# ----------------------------------------------------------------------------
+  # ----------------------------------------------------------------------------
+  # Jaeger (Distributed Tracing - OpenTelemetry)
+  # ----------------------------------------------------------------------------
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    container_name: stockorchestra_jaeger
+    restart: unless-stopped
+    ports:
+      - '16686:16686'   # UI
+      - '6831:6831'   # UDP Agent
+      - '6832:6832'   # ZIPKIN
+    environment:
+      COLLECTOR_OTLP_ENABLED: true
+      SPAN_STORAGE_TYPE: badger
+    networks:
+      - internal_bridge
+    labels:
+      service.type: tracing
+      project.name: StockOrchestra
+      project.version: '1.0'
+
+  # ----------------------------------------------------------------------------
+  # Prometheus (Metrics Collection)
+  # ----------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: stockorchestra_prometheus
+    restart: unless-stopped
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    networks:
+      - internal_bridge
+    labels:
+      service.type: metrics
+      project.name: StockOrchestra
+      project.version: '1.0'
+
+  # ----------------------------------------------------------------------------
+  # Grafana (Metrics Visualization)
+  # ----------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: stockorchestra_grafana
+    restart: unless-stopped
+    ports:
+      - '3030:3000'
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin123}
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - internal_bridge
+    labels:
+      service.type: visualization
+      project.name: StockOrchestra
+      project.version: '1.0'
+
 volumes:
   timescale_data:
     driver: local
-    labels:
-      project.name: StockOrchestra
-      project.version: '1.0'
-      volume.type: database
-
   redis_data:
     driver: local
-    labels:
-      project.name: StockOrchestra
-      project.version: '1.0'
-      volume.type: cache
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
 
-# ----------------------------------------------------------------------------
-# Docker Networks - İç Ağ Yapılandırması
-# ----------------------------------------------------------------------------
 networks:
   internal_bridge:
     driver: bridge
@@ -107,20 +160,3 @@ networks:
       config:
         - subnet: 172.28.0.0/16
           gateway: 172.28.0.1
-
-# ==============================================================================
-# Kullanım Notları:
-# ==============================================================================
-# 1. Başlatma: docker-compose up -d
-# 2. Durumu kontrol et: docker-compose ps
-# 3. Logları izle: docker-compose logs -f timescaledb
-# 4. Logları izle: docker-compose logs -f redis
-# 5. Durdurma: docker-compose down
-# 6. Volume'leri silmeden durdurma: docker-compose down -v
-# ==============================================================================
-# Ortam Değişkenleri:
-# ==============================================================================
-# POSTGRES_PASSWORD: PostgreSQL şifresi (varsayılan: stockorchestra_secure_pass_2024)
-# REDIS_PASSWORD: Redis şifresi (varsayılan: redis_secure_pass_2024)
-# ÖNERİ: .env dosyası kullanarak bu değerleri güvenli şekilde yönetin
-# ==============================================================================
